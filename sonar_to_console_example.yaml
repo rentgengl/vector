@@ -1,0 +1,40 @@
+#                                    __   __  __
+#                                    \ \ / / / /
+#                                     \ V / / /
+#                                      \_/  \/
+#
+#                                    V E C T O R
+#                                   Configuration
+#
+# ------------------------------------------------------------------------------
+# Website: https://vector.dev
+# Docs: https://vector.dev/docs
+# Chat: https://chat.vector.dev
+# ------------------------------------------------------------------------------
+
+data_dir: "C:\\vector\\data"
+
+sources:
+  my_sonar_logs:
+    type: "file"
+    read_from: "beginning"
+    include: [ "C:\\логиСонар\\archive\\*.txt" ]
+transforms:
+  my_sonar_remap:
+    inputs:
+      - "my_sonar_logs"
+    type:   "remap"
+    source: |
+        structured, err = parse_regex(.message, r'(?P<datetime>\d{2}:\d{2}:\d{2})  (?P<type>\w+): (?P<message>.+) \(done\) \| time=(?P<time>\d+)ms', numeric_groups: false)                                          
+        . = merge(., structured)
+        .err = err   
+  my_sonar_filter: 
+    inputs: ["my_sonar_remap"]
+    type: "filter"
+    condition: '.err == null'
+sinks:
+  my_console_debug:
+    type: "console"
+    inputs: ["filter_success"]
+    encoding:
+      codec: "json"

@@ -1,0 +1,54 @@
+#                                    __   __  __
+#                                    \ \ / / / /
+#                                     \ V / / /
+#                                      \_/  \/
+#
+#                                    V E C T O R
+#                                   Configuration
+#
+# ------------------------------------------------------------------------------
+# Website: https://vector.dev
+# Docs: https://vector.dev/docs
+# Chat: https://chat.vector.dev
+# ------------------------------------------------------------------------------
+
+data_dir: "C:\\vector\\data"
+
+sources:
+ 
+  log:
+    type:   "file"
+    include: ["/var/vector/1540/techlog/**/*.log"]
+    data_dir:  "/var/vector/data"
+    fingerprint:
+      strategy: "device_and_inode"
+    multiline:
+      timeout_ms: 1000
+      mode: "halt_before"
+      start_pattern: ''
+      condition_pattern: '^\d{2}:\d{2}\.\d{6}'
+
+
+transforms:
+ 
+  log_filebeat_emulator:
+    inputs: [ "log" ]
+    type: "remap"
+    source: ".host=downcase!(.host)\n.log.file.path=.file\n.agent.hostname=.host\n.fields.log_type=\"all\"\n.fields.log_timezone=\"Europe/Moscow\""
+
+sinks:
+
+  opensearch_log:
+    type: elasticsearch
+    inputs: ["log_filebeat_emulator"]
+    api_version: "v7"
+    endpoint: "https://myopensearch:9200"
+    tls:
+        verify_certificate: false   
+    auth:
+        password: "pas"
+        user: "usr"
+        strategy: "basic"
+    pipeline: "techlog"
+    bulk:
+        index: "techlog-{{host}}-%Y.%m.%d"

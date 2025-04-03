@@ -1,0 +1,36 @@
+#                                    __   __  __
+#                                    \ \ / / / /
+#                                     \ V / / /
+#                                      \_/  \/
+#
+#                                    V E C T O R
+#                                   Configuration
+#
+# ------------------------------------------------------------------------------
+# Website: https://vector.dev
+# Docs: https://vector.dev/docs
+# Chat: https://chat.vector.dev
+# ------------------------------------------------------------------------------
+
+data_dir: "C:\\vector\\data"
+
+sources:
+  pg_json:
+    type: "file"
+    read_from: "beginning"
+    include: [ "C:\\Program Files\\PostgreSQL\\17.2-4.1C\\data\\log\\*.json" ]
+transforms:
+  remap_pg_json:
+    inputs:
+      - "pg_json"
+    type:   "remap"
+    source: ". = parse_json!(.message)"
+sinks:
+  clickhouse_pg_json:
+    type: "clickhouse"
+    inputs: ["remap_pg_json"]
+    endpoint: "http://localhost:8123"
+    database: "logs"
+    table: "pg_json"
+    skip_unknown_fields: true
+    date_time_best_effort: true
